@@ -10,14 +10,14 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onSelectPlan }) => {
   const { name, icon: Icon, features, plans } = product;
 
-  // Find the lowest price among the plans
-  const minPrice = Math.min(...plans.map(p => p.price));
+  // Sesuai instruksi: Ambil harga dari paket pertama. Default ke 0 jika tidak ada paket.
+  const priceToShow = plans[0]?.price ?? 0;
 
   const formattedPrice = new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
-  }).format(minPrice);
+  }).format(priceToShow);
 
   const handleSelectPlan = () => {
     onSelectPlan(product);
@@ -29,8 +29,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelectPlan }) => {
         <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-white flex-shrink-0" />
         <div>
           <h3 className="text-lg sm:text-2xl font-bold font-orbitron text-cyan-300 leading-tight">{name}</h3>
-          {/* Display duration from the first plan as a default hint */}
-          <p className="text-xs sm:text-sm text-cyan-100/70">{plans[0].duration}</p>
+          {/* Tampilkan durasi dari paket pertama sebagai petunjuk, periksa jika ada */}
+          <p className="text-xs sm:text-sm text-cyan-100/70">{plans[0]?.duration || 'Tidak ada paket'}</p>
         </div>
       </div>
       <ul className="space-y-1 sm:space-y-2 text-slate-300 flex-grow mb-4 sm:mb-6 text-xs sm:text-base">

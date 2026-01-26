@@ -2,7 +2,9 @@
 import React from 'react';
 import type { Product } from './types';
 import * as icons from './components/icons';
-import { STRAPI_API_URL } from './constants';
+
+// Hardcoded API URL as per instruction to bypass environment variable issues.
+const STRAPI_API_URL = "https://api.guritap.work";
 
 // --- Type definitions for the Strapi API response ---
 interface StrapiPlan {
@@ -21,8 +23,8 @@ interface StrapiCategory {
 
 interface StrapiProductAttributes {
     name: string;
-    features: string[] | string; // Can be an array or a string from the API
-    plans: StrapiPlan[];
+    features: string[] | string;
+    plans: StrapiPlan[]; // This matches the repeatable component structure
     category: {
         data: StrapiCategory | null;
     };
@@ -101,29 +103,9 @@ const DefaultIcon = icons.OctopusIcon;
 const mapStrapiToProduct = (strapiProduct: StrapiProductData): Product => {
     const { id, attributes } = strapiProduct;
 
-    // The 'features' field is of type JSON in Strapi. This can lead to malformed data
-    // if the user doesn't input a valid JSON array. This logic makes the parsing robust.
     let safeFeatures: string[] = [];
-    if (Array.isArray(attributes.features)) {
-        // The best case: data is already a valid array.
-        safeFeatures = attributes.features.filter(f => typeof f === 'string');
-    } else if (typeof attributes.features === 'string') {
-        // The user might have entered a stringified JSON array or plain text.
-        const trimmedFeatures = attributes.features.trim();
-        if (trimmedFeatures.startsWith('[') && trimmedFeatures.endsWith(']')) {
-            // Looks like a JSON array string. Let's try to parse it.
-            try {
-                const parsed = JSON.parse(trimmedFeatures);
-                if (Array.isArray(parsed)) {
-                    safeFeatures = parsed.filter(f => typeof f === 'string');
-                }
-            } catch (e) {
-                console.warn(`Could not parse 'features' JSON string for product "${attributes.name}".`, e);
-            }
-        } else if (trimmedFeatures.length > 0) {
-            // It's likely plain text. Let's split by newline or comma.
-            safeFeatures = trimmedFeatures.split(/[\n,]/).map(f => f.trim()).filter(Boolean);
-        }
+    if (typeof attributes.features === 'string' && attributes.features.length > 0) {
+        safeFeatures = attributes.features.split(/[\n,]/).map(f => f.trim()).filter(Boolean);
     }
 
     return {
@@ -131,6 +113,7 @@ const mapStrapiToProduct = (strapiProduct: StrapiProductData): Product => {
         name: attributes.name,
         icon: iconMap[attributes.iconIdentifier] || DefaultIcon,
         features: safeFeatures,
+        // Ensure plans is always an array, even if it's missing from the API response
         plans: attributes.plans || [],
         category: attributes.category?.data?.attributes?.name || 'Uncategorized',
     };
@@ -138,22 +121,24 @@ const mapStrapiToProduct = (strapiProduct: StrapiProductData): Product => {
 
 // --- API Fetch Functions ---
 export const fetchProducts = async (): Promise<Product[]> => {
+    const url = `${STRAPI_API_URL}/api/products?populate=*`;
+    // Debug log as requested
+    console.log('Attempting to fetch products from:', url);
     try {
-        // Using 'populate=*' which is the standard Strapi v4 way to populate 1st level relations.
-        // This avoids the "Bad Request" error if 'strapi-plugin-populate-deep' isn't installed.
-        const response = await fetch(`${STRAPI_API_URL}/api/products?populate=*`);
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         const json: StrapiProductsResponse = await response.json();
         
+        // Debug log as requested
+        console.log('Raw data received from Strapi:', json);
+
         if (!json.data) {
             console.warn("Strapi response is missing 'data' array.", json);
             return [];
         }
 
-        // Filter out any products that are null or don't have an 'attributes' property
-        // before attempting to map them. This prevents the "reading 'features' of undefined" error.
         return json.data
             .filter(product => product && product.attributes)
             .map(mapStrapiToProduct);
@@ -165,9 +150,11 @@ export const fetchProducts = async (): Promise<Product[]> => {
 };
 
 export const fetchCategories = async (): Promise<string[]> => {
+    const url = `${STRAPI_API_URL}/api/categories?sort=order:asc`;
+     // Debug log
+    console.log('Attempting to fetch categories from:', url);
     try {
-        // Fetch categories and sort them by the 'order' field
-        const response = await fetch(`${STRAPI_API_URL}/api/categories?sort=order:asc`);
+        const response = await fetch(url);
         if(!response.ok) {
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
@@ -177,7 +164,6 @@ export const fetchCategories = async (): Promise<string[]> => {
             console.warn("Strapi categories response is missing 'data' array.", json);
             return [];
         }
-        // Filter out any malformed entries before mapping to prevent crashes.
         return json.data
             .filter(cat => cat && cat.attributes && cat.attributes.name)
             .map(cat => cat.attributes.name);

@@ -2,6 +2,7 @@
 import React from 'react';
 
 export interface ProductPlan {
+  id?: number; // The component item from Strapi will have an ID
   duration: string;
   price: number;
 }
