@@ -13,19 +13,11 @@ import {
 } from './components/icons';
 
 // You can change this URL to your deployed Strapi instance
-export const STRAPI_API_URL = 'http://localhost:1337';
+export const STRAPI_API_URL = 'https://api.guritap.work';
 export const WHATSAPP_NUMBER = '6281234567890'; // Ganti dengan nomor WhatsApp Anda
 
-export const categoryOrder = [
-  'Streaming Film & Hiburan',
-  'Desain & Editing',
-  'Artificial Intelligence (AI)',
-  'Musik & Audio',
-  'Produktivitas & Edukasi',
-  'Buku & Literasi',
-  'VPN & Keamanan Internet',
-  'Utilitas & Sosial Media Tools',
-];
+// The categoryOrder array is now removed.
+// The order will be fetched from the 'order' field in the Category collection type in Strapi.
 
 export const categoryDisplayMap: { [key: string]: string } = {
   'Streaming Film & Hiburan': 'Streaming',

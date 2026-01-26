@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { categoryOrder } from '../constants';
 import ProductCard from './ProductCard';
 import type { Product } from '../types';
 
 interface ProductListProps {
   products: Product[];
+  categories: string[];
   onSelectPlan: (product: Product) => void;
   searchQuery: string;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, onSelectPlan, searchQuery }) => {
+const ProductList: React.FC<ProductListProps> = ({ products, categories, onSelectPlan, searchQuery }) => {
   const formatCategoryId = (category: string) => {
     return `category-${category.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
   };
@@ -61,7 +61,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onSelectPlan, searc
 
   return (
     <div className="space-y-12">
-      {categoryOrder.map(category => (
+      {categories.map(category => (
         groupedProducts[category] && (
           <section key={category} id={formatCategoryId(category)} data-category={category}>
             <h2 className="text-3xl font-bold font-orbitron mb-6 text-cyan-200 text-center md:text-left">{category}</h2>

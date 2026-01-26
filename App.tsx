@@ -11,9 +11,8 @@ import BottomNav from './components/BottomNav';
 import CategoryModal from './components/CategoryModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
 import { CartProvider } from './context/CartContext';
-import { categoryOrder } from './constants';
 import type { Product } from './types';
-import { fetchProducts } from './api';
+import { fetchProducts, fetchCategories } from './api';
 
 const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -23,27 +22,43 @@ const App: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const mainRef = useRef<HTMLElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedProducts = await fetchProducts();
+        // Fetch both products and categories concurrently
+        const [fetchedProducts, fetchedCategories] = await Promise.all([
+          fetchProducts(),
+          fetchCategories()
+        ]);
         setProducts(fetchedProducts);
+        setCategories(fetchedCategories);
       } catch (e) {
-        setError("Gagal memuat produk. Pastikan backend Strapi Anda berjalan dan dapat diakses.");
+        let errorMessage = "Gagal memuat data. Pastikan backend Strapi Anda berjalan dan dapat diakses.";
+        if (e instanceof Error) {
+            // Provide more specific feedback for common issues
+            if (e.message.includes('Failed to fetch')) {
+                 errorMessage += `\n\n[Detail Teknis: Gagal melakukan koneksi]. Ini seringkali disebabkan oleh masalah CORS di backend Strapi atau server backend sedang tidak aktif.`;
+            } else if (e.message.includes('Forbidden')) {
+                errorMessage += `\n\n[Detail Teknis: Akses Ditolak (403)]. Pastikan Anda telah memberikan izin 'find' dan 'findOne' untuk 'Product' dan 'Category' pada role 'Public' di Pengaturan Strapi.`;
+            } else {
+                 errorMessage += `\n\n[Detail Teknis: ${e.message}]`;
+            }
+        }
+        setError(errorMessage);
         console.error(e);
       } finally {
         setIsLoading(false);
       }
     };
-    loadProducts();
+    loadData();
   }, []);
 
   const handleProductAdded = () => {
@@ -77,7 +92,9 @@ const App: React.FC = () => {
   };
 
   const handleBannerCTAClick = () => {
-    handleCategoryClick(categoryOrder[0]);
+    if (categories.length > 0) {
+      handleCategoryClick(categories[0]);
+    }
   };
   
   const renderContent = () => {
@@ -88,14 +105,14 @@ const App: React.FC = () => {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p className="font-orbitron text-2xl text-cyan-200">Memuat Produk...</p>
+          <p className="font-orbitron text-2xl text-cyan-200">Memuat Data...</p>
         </div>
       );
     }
 
     if (error) {
        return (
-        <div className="flex flex-col items-center justify-center text-center py-12 mx-auto max-w-2xl bg-red-900/30 border-2 border-red-500/50 rounded-2xl p-8">
+        <div className="flex flex-col items-center justify-center text-center py-12 mx-auto max-w-2xl bg-red-900/30 border-2 border-red-500/50 rounded-2xl p-8 whitespace-pre-wrap">
           <p className="font-orbitron text-2xl text-red-400 mb-2">Oops! Terjadi Kesalahan</p>
           <p className="text-slate-300">{error}</p>
         </div>
@@ -105,6 +122,7 @@ const App: React.FC = () => {
     return (
        <ProductList 
           products={products}
+          categories={categories}
           onSelectPlan={handleSelectPlan}
           searchQuery={searchQuery}
        />
@@ -117,13 +135,13 @@ const App: React.FC = () => {
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
         <div className="relative z-10 flex flex-col min-h-screen pb-20 sm:pb-0">
           <Header onCartClick={() => setIsCartOpen(true)} />
-          <main ref={mainRef} className="flex-grow container mx-auto px-4 py-8 sm:py-12">
+          <main className="flex-grow container mx-auto px-4 py-8 sm:py-12">
             <Banner ref={bannerRef} onCTAClick={handleBannerCTAClick} />
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
             
             {!searchQuery && (
               <CategoryNav 
-                categories={categoryOrder} 
+                categories={categories} 
                 onCategoryClick={handleCategoryClick} 
               />
             )}
@@ -142,7 +160,7 @@ const App: React.FC = () => {
         <CategoryModal 
           isOpen={isCategoryModalOpen}
           onClose={() => setIsCategoryModalOpen(false)}
-          categories={categoryOrder}
+          categories={categories}
           onCategoryClick={handleCategoryClick}
         />
         <BottomNav 
