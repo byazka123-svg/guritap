@@ -12,7 +12,7 @@ import CategoryModal from './components/CategoryModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
 import { CartProvider } from './context/CartContext';
 import type { Product } from './types';
-import { fetchProducts, fetchCategories } from './api';
+import { fetchProducts, fetchCategories, ApiError } from './api';
 
 const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -33,7 +33,6 @@ const App: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        // Fetch both products and categories concurrently
         const [fetchedProducts, fetchedCategories] = await Promise.all([
           fetchProducts(),
           fetchCategories()
@@ -41,17 +40,31 @@ const App: React.FC = () => {
         setProducts(fetchedProducts);
         setCategories(fetchedCategories);
       } catch (e) {
-        let errorMessage = "Gagal memuat data. Pastikan backend Strapi Anda berjalan dan dapat diakses.";
-        if (e instanceof Error) {
-            // Provide more specific feedback for common issues
-            if (e.message.includes('Failed to fetch')) {
-                 errorMessage += `\n\n[Detail Teknis: Gagal melakukan koneksi]. Ini seringkali disebabkan oleh masalah CORS di backend Strapi atau server backend sedang tidak aktif.`;
-            } else if (e.message.includes('Forbidden')) {
-                errorMessage += `\n\n[Detail Teknis: Akses Ditolak (403)]. Pastikan Anda telah memberikan izin 'find' dan 'findOne' untuk 'Product' dan 'Category' pada role 'Public' di Pengaturan Strapi.`;
-            } else {
-                 errorMessage += `\n\n[Detail Teknis: ${e.message}]`;
-            }
+        let errorMessage: string;
+
+        if (e instanceof ApiError) {
+          if (e.status === 403) {
+            errorMessage = "AKSES DITOLAK (Error 403)\n\n" +
+                           "Ini berarti API Anda ada, tetapi akses publik diblokir.\n\n" +
+                           "Solusi: Buka panel admin Strapi Anda, lalu pergi ke:\n" +
+                           "Settings > Roles > Public\n\n" +
+                           "Kemudian, untuk 'Product' dan 'Category', centang kotak 'find' dan 'findOne'. Simpan perubahan dan refresh halaman ini.";
+          } else if (e.status === 404) {
+            errorMessage = "ENDPOINT TIDAK DITEMUKAN (Error 404)\n\n" +
+                           "Aplikasi tidak dapat menemukan endpoint produk/kategori di server.\nPastikan URL API di file `api.ts` sudah benar dan collection types Anda sudah di-'publish' di Strapi.";
+          } else {
+            errorMessage = `Terjadi masalah saat komunikasi dengan API.\n\n[Detail Teknis: Error ${e.status} - ${e.message}]`;
+          }
+        } else if (e instanceof Error) {
+          if (e.message.includes('Failed to fetch')) {
+            errorMessage = `GAGAL KONEKSI\n\nTidak dapat terhubung ke server API.\n\nPastikan:\n1. URL API di file api.ts sudah benar.\n2. Server backend Strapi Anda sedang berjalan.\n3. Tidak ada masalah CORS atau firewall.`;
+          } else {
+            errorMessage = `Terjadi error yang tidak terduga.\n\n[Detail Teknis: ${e.message}]`;
+          }
+        } else {
+            errorMessage = "Terjadi error yang tidak diketahui.";
         }
+        
         setError(errorMessage);
         console.error(e);
       } finally {
@@ -105,16 +118,16 @@ const App: React.FC = () => {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p className="font-orbitron text-2xl text-cyan-200">Memuat Data...</p>
+          <p className="font-orbitron text-2xl text-cyan-200">Menghubungkan ke Server...</p>
         </div>
       );
     }
 
     if (error) {
        return (
-        <div className="flex flex-col items-center justify-center text-center py-12 mx-auto max-w-2xl bg-red-900/30 border-2 border-red-500/50 rounded-2xl p-8 whitespace-pre-wrap">
-          <p className="font-orbitron text-2xl text-red-400 mb-2">Oops! Terjadi Kesalahan</p>
-          <p className="text-slate-300">{error}</p>
+        <div className="flex flex-col items-center justify-center text-center py-12 mx-auto max-w-2xl bg-red-900/30 border-2 border-red-500/50 rounded-2xl p-8">
+          <p className="font-orbitron text-2xl text-red-400 mb-4">Oops! Gagal Memuat Data</p>
+          <p className="text-slate-300 whitespace-pre-wrap text-left font-mono bg-slate-900/50 p-4 rounded-lg">{error}</p>
         </div>
       );
     }

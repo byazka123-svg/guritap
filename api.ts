@@ -1,51 +1,50 @@
 
 import React from 'react';
-import type { Product } from './types';
+import type { Product, ProductPlan } from './types';
 import * as icons from './components/icons';
 
-// Hardcoded API URL as per instruction to bypass environment variable issues.
+// Hardcoded API URL as per instruction.
 const STRAPI_API_URL = "https://api.guritap.work";
 
-// --- Type definitions for the Strapi API response ---
-interface StrapiPlan {
-    id: number;
-    duration: string;
-    price: number;
+/**
+ * Custom error class to include HTTP status codes for better error handling.
+ */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
 }
 
-interface StrapiCategory {
-    id: number;
-    attributes: {
-        name: string;
-        order: number;
-    };
-}
 
-interface StrapiProductAttributes {
-    name: string;
-    features: string[] | string;
-    plans: StrapiPlan[]; // This matches the repeatable component structure
-    category: {
-        data: StrapiCategory | null;
-    };
-    iconIdentifier: string;
-    createdAt: string;
-    updatedAt: string;
-    publishedAt: string;
+// --- New Type definitions for the FLAT Strapi API response ---
+
+interface StrapiCategoryData {
+  id: number;
+  name: string;
+  order: number;
 }
 
 interface StrapiProductData {
-    id: number;
-    attributes: StrapiProductAttributes;
+  id: number;
+  name: string;
+  iconIdentifier: string;
+  features: string; // Comes as a single string with newlines
+  plans: ProductPlan[];
+  category: StrapiCategoryData | null;
+  createdAt: string;
 }
 
 interface StrapiProductsResponse {
-    data: StrapiProductData[];
+  data: StrapiProductData[];
 }
 
 interface StrapiCategoriesResponse {
-    data: StrapiCategory[];
+  data: StrapiCategoryData[];
 }
+
 
 // --- Icon Mapping ---
 const iconMap: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
@@ -99,76 +98,75 @@ const iconMap: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
 
 const DefaultIcon = icons.OctopusIcon;
 
+
 // --- Data Transformation ---
-const mapStrapiToProduct = (strapiProduct: StrapiProductData): Product => {
-    const { id, attributes } = strapiProduct;
+const mapStrapiToProduct = (item: StrapiProductData): Product => {
+  let safeFeatures: string[] = [];
+  // Handle features string and split it into an array
+  if (typeof item.features === 'string' && item.features.length > 0) {
+    safeFeatures = item.features.split(/[\n,]/).map(f => f.trim()).filter(Boolean);
+  }
 
-    let safeFeatures: string[] = [];
-    if (typeof attributes.features === 'string' && attributes.features.length > 0) {
-        safeFeatures = attributes.features.split(/[\n,]/).map(f => f.trim()).filter(Boolean);
-    }
-
-    return {
-        id: id,
-        name: attributes.name,
-        icon: iconMap[attributes.iconIdentifier] || DefaultIcon,
-        features: safeFeatures,
-        // Ensure plans is always an array, even if it's missing from the API response
-        plans: attributes.plans || [],
-        category: attributes.category?.data?.attributes?.name || 'Uncategorized',
-    };
+  return {
+    id: item.id,
+    name: item.name,
+    icon: iconMap[item.iconIdentifier] || DefaultIcon,
+    features: safeFeatures,
+    // Ensure plans is always an array
+    plans: Array.isArray(item.plans) ? item.plans : [],
+    // Safely access category name, default if null
+    category: item.category?.name || 'Uncategorized',
+  };
 };
+
 
 // --- API Fetch Functions ---
 export const fetchProducts = async (): Promise<Product[]> => {
     const url = `${STRAPI_API_URL}/api/products?populate=*`;
-    // Debug log as requested
-    console.log('Attempting to fetch products from:', url);
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-        const json: StrapiProductsResponse = await response.json();
-        
-        // Debug log as requested
-        console.log('Raw data received from Strapi:', json);
+    console.log('Attempting to fetch products from (flat structure):', url);
 
-        if (!json.data) {
-            console.warn("Strapi response is missing 'data' array.", json);
-            return [];
-        }
-
-        return json.data
-            .filter(product => product && product.attributes)
-            .map(mapStrapiToProduct);
-
-    } catch (error) {
-        console.error("Failed to fetch products from Strapi:", error);
-        throw error;
+    const response = await fetch(url);
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.error?.message || response.statusText;
+        throw new ApiError(`API Error: ${message}`, response.status);
     }
+    
+    const json: StrapiProductsResponse = await response.json();
+    console.log('Raw data received from Strapi (Products):', json);
+
+    if (!json.data) {
+        console.warn("Strapi response is missing 'data' array.", json);
+        return [];
+    }
+
+    // Map directly on the flat data, no .attributes needed
+    return json.data
+        .filter(product => product) // Simple filter to ensure product object exists
+        .map(mapStrapiToProduct);
 };
 
 export const fetchCategories = async (): Promise<string[]> => {
     const url = `${STRAPI_API_URL}/api/categories?sort=order:asc`;
-     // Debug log
-    console.log('Attempting to fetch categories from:', url);
-    try {
-        const response = await fetch(url);
-        if(!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-        const json: StrapiCategoriesResponse = await response.json();
-
-        if(!json.data) {
-            console.warn("Strapi categories response is missing 'data' array.", json);
-            return [];
-        }
-        return json.data
-            .filter(cat => cat && cat.attributes && cat.attributes.name)
-            .map(cat => cat.attributes.name);
-    } catch (error) {
-        console.error("Failed to fetch categories from Strapi:", error);
-        throw error;
+    console.log('Attempting to fetch categories from (flat structure):', url);
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.error?.message || response.statusText;
+        throw new ApiError(`API Error: ${message}`, response.status);
     }
+
+    const json: StrapiCategoriesResponse = await response.json();
+    console.log('Raw data received from Strapi (Categories):', json);
+
+    if(!json.data) {
+        console.warn("Strapi categories response is missing 'data' array.", json);
+        return [];
+    }
+    
+    // Map directly on flat data, no .attributes needed
+    return json.data
+        .filter(cat => cat && cat.name)
+        .map(cat => cat.name);
 }
