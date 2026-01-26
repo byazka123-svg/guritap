@@ -1,9 +1,5 @@
 
 import React from 'react';
-import { categoryDisplayMap } from '../constants';
-import { 
-  StreamingIcon, DesignIcon, AiIcon, MusicIcon, EdukasiIcon, BukuIcon, VpnIcon, UtilitasIcon 
-} from './icons/CategoryIcons';
 
 interface CategoryModalProps {
     isOpen: boolean;
@@ -11,18 +7,6 @@ interface CategoryModalProps {
     categories: string[];
     onCategoryClick: (category: string) => void;
 }
-
-const categoryIconMap: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
-  'Streaming Film & Hiburan': StreamingIcon,
-  'Desain & Editing': DesignIcon,
-  'Artificial Intelligence (AI)': AiIcon,
-  'Musik & Audio': MusicIcon,
-  'Produktivitas & Edukasi': EdukasiIcon,
-  'Buku & Literasi': BukuIcon,
-  'VPN & Keamanan Internet': VpnIcon,
-  'Utilitas & Sosial Media Tools': UtilitasIcon,
-};
-
 
 const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, categories, onCategoryClick }) => {
     if (!isOpen) return null;
@@ -39,20 +23,16 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, categori
                 </header>
 
                 <div className="overflow-y-auto p-4">
-                  <div className="grid grid-cols-1 gap-2">
-                    {categories.map(category => {
-                      const Icon = categoryIconMap[category];
-                      return (
-                        <button
-                          key={category}
-                          onClick={() => onCategoryClick(category)}
-                          className="w-full flex items-center gap-4 text-left p-4 bg-slate-700/50 rounded-lg text-cyan-200 transition-all duration-300 hover:bg-cyan-400 hover:text-slate-900 group"
-                        >
-                          {Icon && <Icon className="w-8 h-8 flex-shrink-0" />}
-                          <span className="font-semibold text-lg">{category}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="grid grid-cols-4 gap-3">
+                    {categories.map(category => (
+                      <button
+                        key={category}
+                        onClick={() => onCategoryClick(category)}
+                        className="flex items-center justify-center p-3 text-center bg-slate-700/50 rounded-lg text-cyan-200 transition-all duration-300 hover:bg-cyan-400 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                      >
+                        <span className="font-semibold text-sm leading-tight">{category}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
             </div>
