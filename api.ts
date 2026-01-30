@@ -1,10 +1,7 @@
-
 import React from 'react';
 import type { Product, ProductPlan, BannerContent } from './types';
 import * as icons from './components/icons';
-
-// Hardcoded API URL as per instruction.
-const STRAPI_API_URL = "https://api.guritap.work";
+import { STRAPI_API_URL } from './constants'; // Import from the single source of truth
 
 /**
  * Custom error class to include HTTP status codes for better error handling.

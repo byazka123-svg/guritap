@@ -1,4 +1,3 @@
-
 import type { Product } from './types';
 import { 
   NetflixIcon, SpotifyIcon, YoutubeIcon, CanvaIcon, CapcutIcon, VidioIcon,
@@ -15,6 +14,9 @@ import {
 // You can change this URL to your deployed Strapi instance
 export const STRAPI_API_URL = 'https://api.guritap.work';
 export const WHATSAPP_NUMBER = '6281234567890'; // Ganti dengan nomor WhatsApp Anda
+
+// URL WebSocket server Anda.
+export const WEBSOCKET_URL = 'wss://guritap.work/chat';
 
 // The categoryOrder array is now removed.
 // The order will be fetched from the 'order' field in the Category collection type in Strapi.

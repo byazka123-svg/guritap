@@ -10,6 +10,8 @@ import SearchBar from './components/SearchBar';
 import BottomNav from './components/BottomNav';
 import CategoryModal from './components/CategoryModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
+import FloatingChatButton from './components/FloatingChatButton';
+import ChatPopup from './components/ChatPopup';
 import { CartProvider } from './context/CartContext';
 import type { Product, BannerContent } from './types';
 import { fetchProducts, fetchCategories, fetchBannerContent, ApiError } from './api';
@@ -20,6 +22,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isChatPopupOpen, setIsChatPopupOpen] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -189,6 +192,8 @@ const App: React.FC = () => {
           onCartClick={() => setIsCartOpen(true)}
           onCategoryClick={() => setIsCategoryModalOpen(true)}
         />
+        <FloatingChatButton onClick={() => setIsChatPopupOpen(true)} />
+        <ChatPopup isOpen={isChatPopupOpen} onClose={() => setIsChatPopupOpen(false)} />
       </div>
     </CartProvider>
   );

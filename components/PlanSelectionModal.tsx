@@ -18,11 +18,17 @@ const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, onClose
 
     const { name, icon: Icon, plans } = product;
 
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('id-ID', { 
-        style: 'currency', 
-        currency: 'IDR', 
-        minimumFractionDigits: 0 
-    }).format(amount);
+    const formatPrice = (amount: number) => {
+        if (amount >= 1000) {
+            const value = new Intl.NumberFormat('id-ID').format(amount / 1000);
+            return `Rp ${value}k`;
+        }
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+        }).format(amount);
+    };
     
     const handleAddToCart = (plan: ProductPlan) => {
         addToCart(product, plan);
@@ -51,16 +57,12 @@ const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, onClose
                 <div className="flex-grow overflow-y-auto p-4 space-y-3">
                     {plans.map((plan) => {
                         const isAdded = addedPlan === plan.duration;
-                        const hasDiscount = plan.originalPrice && plan.originalPrice > plan.price;
                         return (
                             <div key={plan.duration} className="bg-slate-700/50 p-3 rounded-lg flex items-center justify-between gap-4">
                                 <div>
                                     <p className="font-bold text-white">{plan.duration}</p>
                                     <div className="flex items-baseline gap-2">
-                                        <p className="text-cyan-300 font-semibold">{formatCurrency(plan.price)}</p>
-                                        {hasDiscount && (
-                                            <p className="text-slate-500 text-sm line-through">{formatCurrency(plan.originalPrice!)}</p>
-                                        )}
+                                        <p className="text-cyan-300 font-semibold">{formatPrice(plan.price)}</p>
                                     </div>
                                 </div>
                                 <button

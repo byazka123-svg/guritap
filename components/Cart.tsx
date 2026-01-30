@@ -14,11 +14,19 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
 
   const totalPrice = cartItems.reduce((total, item) => total + item.selectedPlan.price * item.quantity, 0);
 
-  const formattedTotalPrice = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(totalPrice);
+  const formatPrice = (amount: number) => {
+    if (amount >= 1000) {
+        const value = new Intl.NumberFormat('id-ID').format(amount / 1000);
+        return `Rp ${value}k`;
+    }
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formattedTotalPrice = formatPrice(totalPrice);
 
   const handleCheckout = () => {
     setIsLoading(true);
@@ -60,7 +68,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                 <div className="flex-grow">
                   <p className="font-bold text-white">{item.name}</p>
                   <p className="text-sm text-slate-400">{item.selectedPlan.duration}</p>
-                  <p className="text-sm text-slate-300">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.selectedPlan.price)}</p>
+                  <p className="text-sm text-slate-300">{formatPrice(item.selectedPlan.price)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => updateQuantity(item.id, item.selectedPlan.duration, item.quantity - 1)} className="w-7 h-7 bg-slate-700 rounded font-bold">-</button>

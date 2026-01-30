@@ -26,7 +26,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, categories, onSelec
           Hasil Pencarian "{searchQuery}"
         </h2>
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
             {filteredProducts.map(product => (
               <ProductCard
                 key={product.id}
@@ -65,7 +65,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, categories, onSelec
         groupedProducts[category] && (
           <section key={category} id={formatCategoryId(category)} data-category={category}>
             <h2 className="text-3xl font-bold font-orbitron mb-6 text-cyan-200 text-center md:text-left">{category}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
               {groupedProducts[category].map(product => (
                 <ProductCard 
                   key={product.id} 
