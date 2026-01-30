@@ -5,6 +5,7 @@ export interface ProductPlan {
   id?: number;
   duration: string;
   price: number;
+  originalPrice?: number;
 }
 
 export interface Product {

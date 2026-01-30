@@ -26,7 +26,11 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
             </h1>
         </div>
         <div className="flex-1 flex justify-end">
-            <button onClick={onCartClick} className="relative text-cyan-300 hover:text-white transition-colors duration-300" aria-label={`Open cart with ${totalItems} items`}>
+            <button 
+              onClick={onCartClick} 
+              className="relative text-cyan-300 hover:text-white transition-colors duration-300 hidden sm:block" 
+              aria-label={`Open cart with ${totalItems} items`}
+            >
                 <CartIcon className="w-8 h-8"/>
                 {totalItems > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
