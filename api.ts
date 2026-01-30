@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { Product, ProductPlan } from './types';
+import type { Product, ProductPlan, BannerContent } from './types';
 import * as icons from './components/icons';
 
 // Hardcoded API URL as per instruction.
@@ -37,12 +37,26 @@ interface StrapiProductData {
   createdAt: string;
 }
 
+interface StrapiBannerData {
+    id: number;
+    title: string;
+    description: string;
+    subtitle?: string;
+    createdAt: string;
+    updatedAt: string;
+    publishedAt: string;
+}
+
 interface StrapiProductsResponse {
   data: StrapiProductData[];
 }
 
 interface StrapiCategoriesResponse {
   data: StrapiCategoryData[];
+}
+
+interface StrapiBannerResponse {
+    data: StrapiBannerData;
 }
 
 
@@ -170,3 +184,29 @@ export const fetchCategories = async (): Promise<string[]> => {
         .filter(cat => cat && cat.name)
         .map(cat => cat.name);
 }
+
+export const fetchBannerContent = async (): Promise<BannerContent> => {
+    const url = `${STRAPI_API_URL}/api/banner`;
+    console.log('Attempting to fetch banner content from:', url);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.error?.message || response.statusText;
+        throw new ApiError(`API Error: ${message}`, response.status);
+    }
+
+    const json: StrapiBannerResponse = await response.json();
+    console.log('Raw data received from Strapi (Banner):', json);
+    
+    if (!json.data || !json.data.title || !json.data.description) {
+        console.error("Banner data is missing or incomplete from Strapi", json);
+        throw new Error("Invalid banner data structure received from API.");
+    }
+
+    return {
+        title: json.data.title,
+        description: json.data.description,
+        subtitle: json.data.subtitle,
+    };
+};

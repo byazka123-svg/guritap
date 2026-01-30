@@ -11,8 +11,8 @@ import BottomNav from './components/BottomNav';
 import CategoryModal from './components/CategoryModal';
 import PlanSelectionModal from './components/PlanSelectionModal';
 import { CartProvider } from './context/CartContext';
-import type { Product } from './types';
-import { fetchProducts, fetchCategories, ApiError } from './api';
+import type { Product, BannerContent } from './types';
+import { fetchProducts, fetchCategories, fetchBannerContent, ApiError } from './api';
 
 const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -23,6 +23,7 @@ const App: React.FC = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [bannerContent, setBannerContent] = useState<BannerContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,12 +34,14 @@ const App: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const [fetchedProducts, fetchedCategories] = await Promise.all([
+        const [fetchedProducts, fetchedCategories, fetchedBannerContent] = await Promise.all([
           fetchProducts(),
-          fetchCategories()
+          fetchCategories(),
+          fetchBannerContent()
         ]);
         setProducts(fetchedProducts);
         setCategories(fetchedCategories);
+        setBannerContent(fetchedBannerContent);
       } catch (e) {
         let errorMessage: string;
 
@@ -48,10 +51,10 @@ const App: React.FC = () => {
                            "Ini berarti API Anda ada, tetapi akses publik diblokir.\n\n" +
                            "Solusi: Buka panel admin Strapi Anda, lalu pergi ke:\n" +
                            "Settings > Roles > Public\n\n" +
-                           "Kemudian, untuk 'Product' dan 'Category', centang kotak 'find' dan 'findOne'. Simpan perubahan dan refresh halaman ini.";
+                           "Kemudian, untuk 'Product', 'Category', dan 'Banner', centang kotak 'find' dan 'findOne'. Simpan perubahan dan refresh halaman ini.";
           } else if (e.status === 404) {
             errorMessage = "ENDPOINT TIDAK DITEMUKAN (Error 404)\n\n" +
-                           "Aplikasi tidak dapat menemukan endpoint produk/kategori di server.\nPastikan URL API di file `api.ts` sudah benar dan collection types Anda sudah di-'publish' di Strapi.";
+                           "Aplikasi tidak dapat menemukan endpoint produk/kategori/banner di server.\nPastikan URL API di file `api.ts` sudah benar dan collection/single types Anda sudah di-'publish' di Strapi.";
           } else {
             errorMessage = `Terjadi masalah saat komunikasi dengan API.\n\n[Detail Teknis: Error ${e.status} - ${e.message}]`;
           }
@@ -147,9 +150,14 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-[#1a1c4b] via-[#2d2f7a] to-[#513d8d] text-white overflow-hidden relative">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
         <div className="relative z-10 flex flex-col min-h-screen pb-20 sm:pb-0">
-          <Header onCartClick={() => setIsCartOpen(true)} />
+          <Header onCartClick={() => setIsCartOpen(true)} subtitle={bannerContent?.subtitle} />
           <main className="flex-grow container mx-auto px-4 py-8 sm:py-12">
-            <Banner ref={bannerRef} onCTAClick={handleBannerCTAClick} />
+            <Banner 
+              ref={bannerRef} 
+              onCTAClick={handleBannerCTAClick}
+              title={bannerContent?.title}
+              description={bannerContent?.description}
+            />
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
             
             {!searchQuery && (

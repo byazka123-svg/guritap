@@ -21,3 +21,9 @@ export interface CartItem extends Product {
   quantity: number;
   selectedPlan: ProductPlan;
 }
+
+export interface BannerContent {
+  title: string;
+  description: string;
+  subtitle?: string;
+}

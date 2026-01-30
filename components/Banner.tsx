@@ -4,28 +4,33 @@ import { WHATSAPP_NUMBER } from '../constants';
 
 interface BannerProps {
   onCTAClick: () => void;
+  title?: string;
+  description?: string;
 }
 
-const Banner = forwardRef<HTMLDivElement, BannerProps>(({ onCTAClick }, ref) => {
+const Banner = forwardRef<HTMLDivElement, BannerProps>(({ onCTAClick, title, description }, ref) => {
   const adminContactMessage = "Halo Gurimin, saya ingin bertanya.";
   const adminWhatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(adminContactMessage)}`;
+
+  const defaultTitle = 'Gabung Jadi Reseller Kami!';
+  const defaultDescription = 'Cari penghasilan tambahan? Dapatkan harga khusus reseller dan jual kembali ribuan akun premium. Mudah, cepat, dan menguntungkan!';
 
   return (
     <div ref={ref} className="relative container mx-auto mb-12 rounded-3xl p-8 sm:p-12 overflow-hidden bg-gradient-to-r from-[#2d2f7a] to-[#513d8d] border border-cyan-400/30 text-center shadow-2xl shadow-cyan-500/10">
        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(107,235,249,0.1),_transparent_40%)]"></div>
         <div className="relative z-10">
             <h2 className="font-orbitron text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-400 drop-shadow-[0_0_10px_rgba(107,235,249,0.7)] mb-4">
-                Gabung Jadi Reseller Kami!
+                {title || defaultTitle}
             </h2>
             <p className="text-base sm:text-lg text-cyan-100/80 max-w-2xl mx-auto mb-8">
-                Cari penghasilan tambahan? Dapatkan harga khusus reseller dan jual kembali ribuan akun premium. Mudah, cepat, dan menguntungkan!
+                {description || defaultDescription}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
                     onClick={onCTAClick}
                     className="bg-cyan-500 text-slate-900 font-bold py-3 px-8 rounded-lg shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 hover:shadow-xl hover:shadow-cyan-400/50 transform hover:scale-105 transition-all duration-300 w-full sm:w-auto"
                 >
-                    Lihat Peluang
+                    Gabung Reseller
                 </button>
                  <a
                     href={adminWhatsappUrl}

@@ -5,11 +5,13 @@ import { useCart } from '../context/CartContext';
 
 interface HeaderProps {
     onCartClick: () => void;
+    subtitle?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
+const Header: React.FC<HeaderProps> = ({ onCartClick, subtitle }) => {
   const { cartItems } = useCart();
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const defaultSubtitle = 'Your One-Stop Premium Account Store';
 
   return (
     <header className="py-6 px-4">
@@ -40,7 +42,9 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
             </button>
         </div>
       </div>
-       <p className="text-center mt-2 text-cyan-200/80 font-light tracking-wider">Your One-Stop Premium Account Store</p>
+       <p className="text-center mt-2 text-cyan-200/80 font-light tracking-wider">
+        {subtitle || defaultSubtitle}
+       </p>
     </header>
   );
 };
